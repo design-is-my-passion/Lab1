@@ -5,37 +5,45 @@ using TMPro;
 
 public class PlayerMovement: MonoBehaviour
 {
-  public float speed = 10;
-  public float maxSpeed = 20;
+    public float speed = 10;
+    public float maxSpeed = 20;
 
-  public float upSpeed = 10;
-  private bool onGroundState = true;
+    public float upSpeed = 10;
+    private bool onGroundState = true;
 
-  private Rigidbody2D marioBody;
-  private SpriteRenderer marioSprite;
-  private bool faceRightState = true;
-  public GameObject enemies;
+    private Rigidbody2D marioBody;
+    private SpriteRenderer marioSprite;
+    private bool faceRightState = true;
+    public GameObject enemies;
 
-  private Vector3 marioInitalPosition;
+    private Vector3 marioInitalPosition;
 
-  public Canvas normalUI;
-  public Canvas gameOver;
-  public TextMeshProUGUI gameOverText;
+    public Canvas normalUI;
+    public Canvas gameOver;
+    public TextMeshProUGUI gameOverText;
 
-  public TimeController timeController;
-  public CameraController gameCamera;
+    public TimeController timeController;
+    public CameraController gameCamera;
 
-  public GameObject flagText;
-  public GameObject normalText;
+    public GameObject flagText;
+    public GameObject normalText;
 
-  void Start()
-  {
-    Application.targetFrameRate = 30;
-    marioBody = GetComponent<Rigidbody2D>();
-    marioInitalPosition = marioBody.transform.position;
+    public Animator marioAnimator;
 
-    marioSprite = GetComponent<SpriteRenderer>();
-  }
+
+
+
+    void Start()
+    {
+        Application.targetFrameRate = 30;
+        marioBody = GetComponent<Rigidbody2D>();
+        marioInitalPosition = marioBody.transform.position;
+
+        marioSprite = GetComponent<SpriteRenderer>();
+
+        marioAnimator.SetBool("onGround", onGroundState);
+
+    }
 
   void Update()
   {
@@ -51,29 +59,46 @@ public class PlayerMovement: MonoBehaviour
       faceRightState = true;
       marioSprite.flipX = false;
     }
-  }
 
-  void FixedUpdate()
-  {
-    float moveHorizontal = Input.GetAxisRaw("Horizontal");
+    if (marioBody.linearVelocity.x > 0.1f)
+        marioAnimator.SetTrigger("onSkid");
 
-    if (Mathf.Abs(moveHorizontal) > 0)
+    }
+
+    void FixedUpdate()
     {
-      Vector2 movement = new Vector2(moveHorizontal, 0);
-      if (marioBody.linearVelocity.magnitude < maxSpeed)
-        marioBody.AddForce(movement * speed);
-    }
+        float moveHorizontal = Input.GetAxisRaw("Horizontal");
 
-    if (Input.GetKeyUp("a") || Input.GetKeyUp("d"))
-    {
-      marioBody.linearVelocity = new Vector2(0.0f, marioBody.linearVelocity.y);
-    }
+        if (Mathf.Abs(moveHorizontal) > 0)
+        {
+            Vector2 movement = new Vector2(moveHorizontal, 0);
+            if (marioBody.linearVelocity.magnitude < maxSpeed)
+            marioBody.AddForce(movement * speed);
+        }
 
-    if (Input.GetKeyDown("space") && onGroundState) {
-      marioBody.AddForce(Vector2.up * upSpeed, ForceMode2D.Impulse);
-      onGroundState = false;
+        if (Input.GetKeyDown("a") && faceRightState)
+        {
+            faceRightState = false;
+            marioSprite.flipX = true;
+            if (marioBody.linearVelocity.x > 0.1f)
+                marioAnimator.SetTrigger("onSkid");
+        }
+
+        if (Input.GetKeyDown("d") && !faceRightState)
+        {
+            faceRightState = true;
+            marioSprite.flipX = false;
+            if (marioBody.linearVelocity.x < -0.1f)
+                marioAnimator.SetTrigger("onSkid");
+        }
+
+        marioAnimator.SetFloat("xSpeed", Mathf.Abs(marioBody.linearVelocity.x));
+
+        if (Input.GetKeyDown("space") && onGroundState) {
+            marioBody.AddForce(Vector2.up * upSpeed, ForceMode2D.Impulse);
+            onGroundState = false;
+        }
     }
-  }
 
   void OnCollisionEnter2D(Collision2D col)
   {
